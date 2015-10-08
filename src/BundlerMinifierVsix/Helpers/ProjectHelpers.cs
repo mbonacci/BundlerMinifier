@@ -24,7 +24,7 @@ namespace BundlerMinifierVsix
             FileInfo info = new FileInfo(file);
             info.IsReadOnly = false;
         }
-
+        
         public static IEnumerable<ProjectItem> GetSelectedItems()
         {
             var items = (Array)_dte.ToolWindows.SolutionExplorer.SelectedItems;

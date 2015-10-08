@@ -88,8 +88,11 @@ namespace BundlerMinifierVsix
             return list;
         }
 
-        public static void Process(string conigFile)
+        public static void Process(string conigFile, FileSystemWatcher watcher = null)
         {
+            if (watcher != null)
+                watcher.EnableRaisingEvents = false;
+
             ThreadPool.QueueUserWorkItem((o) =>
             {
                 try
@@ -99,7 +102,14 @@ namespace BundlerMinifierVsix
                 catch (Exception ex)
                 {
                     Logger.Log(ex);
-                    MessageBox.Show($"There is an error in the {Constants.CONFIG_FILENAME} file. This could be due to a change in the format after this extension was updated.", "Web Compiler", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        $"There is an error in the {Constants.CONFIG_FILENAME} file. This could be due to a change in the format after this extension was updated.",
+                        "Web Compiler", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                finally
+                {
+                    if (watcher != null)
+                        watcher.EnableRaisingEvents = true;
                 }
             });
         }

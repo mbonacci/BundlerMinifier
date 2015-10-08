@@ -14,23 +14,7 @@ namespace BundlerMinifierVsix.Commands
 {
     internal sealed class BundleOnSave
     {
-        private readonly string[] fileExtensions = { ".css", ".less", ".cshtml", ".js" };
-        private static List<FileSystemWatcher> _fileSystemWatchers { get; set; }
-
-        public static void InitializeSolution(Solution solution)
-        {
-            foreach (Project project in solution.GetAllProjects())
-            {
-                Initialize(project);
-            }
-        }
-        public static void RemoveSolution(Solution solution)
-        {
-            foreach (Project project in solution.GetAllProjects())
-            {
-                Remove(project);
-            }
-        }
+        private static List<FileSystemWatcher> _fileSystemWatchers { get; set; } = new List<FileSystemWatcher>();
 
         public static void Initialize(Project project)
         {
@@ -62,27 +46,44 @@ namespace BundlerMinifierVsix.Commands
 
         private static FileSystemWatcher AddWatcher(Project project, string fileExtension)
         {
-            var watcher = new FileSystemWatcher(project.GetRootFolder());
+            var projectRootPath = project.GetRootFolder();
+            var configFileLocation = project.GetConfigFile();
+            var watcher = new FileSystemWatcher(projectRootPath);
 
-            watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime;
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
             watcher.EnableRaisingEvents = true;
             watcher.IncludeSubdirectories = true;
-            watcher.Changed += WatchedFileChanged;
-            watcher.Filter = $"*.{fileExtension}";
+            watcher.Changed += (sender, fileArgs) => WatchedFileChanged(sender, fileArgs, projectRootPath, configFileLocation);
+            watcher.Filter = FilterForFileExtension(fileExtension);
 
             _fileSystemWatchers.Add(watcher);
 
             return watcher;
         }
 
-        private static void WatchedFileChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
+        private static string FilterForFileExtension(string fileExtension) => $"*{fileExtension}";
+
+        private static void WatchedFileChanged(object sender, FileSystemEventArgs fileSystemEventArgs, string projectRootPath, string configFileLocation)
         {
+            var fileSystemWatcher = sender as FileSystemWatcher;
             
+            if (string.IsNullOrEmpty(configFileLocation)) return;
+
+            var bundles = BundleHandler.GetBundles(configFileLocation);
+            var bundleInputPaths = bundles.SelectMany(x => x.InputFiles);
+
+            var relativePath = BundlerMinifier.FileHelpers.MakeRelative(projectRootPath, fileSystemEventArgs.FullPath);
+
+            if (bundleInputPaths.Contains(relativePath))
+                BundleService.Process(configFileLocation, fileSystemWatcher);
         }
+
 
         private static FileSystemWatcher GetWatcher(Project project, string fileExtension)
         {
-            return _fileSystemWatchers.FirstOrDefault(x => x.Path.Equals(project.GetRootFolder()) && x.Filter.Equals($"*.{fileExtension}"));
+            var filterValue = FilterForFileExtension(fileExtension);
+
+            return _fileSystemWatchers.FirstOrDefault(x => x.Path.Equals(project.GetRootFolder()) && x.Filter.Equals(filterValue));
         }
 
         public static void Remove(Project project)
@@ -91,14 +92,32 @@ namespace BundlerMinifierVsix.Commands
 
             if (!string.IsNullOrEmpty(configFilePath) && File.Exists(configFilePath))
             {
-                var fileWatcher = GetWatcher(project);
+                var bundles = BundleHandler.GetBundles(configFilePath);
+                var fileExtensions = GetWatchedFileExtensions(bundles);
 
-                if (fileWatcher != null)
+                foreach (var fileExtension in fileExtensions)
                 {
-                    fileWatcher.Dispose();
-                    _fileSystemWatchers.Remove(fileWatcher);
+                    var fileWatcher = GetWatcher(project, fileExtension);
+
+                    if (fileWatcher != null)
+                    {
+                        fileWatcher.Dispose();
+                        _fileSystemWatchers.Remove(fileWatcher);
+                    }
                 }
             }
+        }
+
+        public static void Initialize(IEnumerable<Project> projects)
+        {
+            foreach (Project project in projects)
+                Initialize(project);
+        }
+
+        public static void Remove(IEnumerable<Project> projects)
+        {
+            foreach (Project project in projects)
+                Remove(project);
         }
     }
 }

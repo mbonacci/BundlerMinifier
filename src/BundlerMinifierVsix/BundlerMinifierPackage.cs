@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
 using BundlerMinifierVsix.Commands;
@@ -23,7 +24,7 @@ namespace BundlerMinifierVsix
         public static DTE2 _dte;
         public static Dispatcher _dispatcher;
         public static Package Package;
-        private SolutionEvents _solutionEvents;
+        private static SolutionEvents _solutionEvents;
 
         protected override void Initialize()
         {
@@ -31,6 +32,7 @@ namespace BundlerMinifierVsix
 
             _dte = GetService(typeof(DTE)) as DTE2;
             _dispatcher = Dispatcher.CurrentDispatcher;
+            _solutionEvents = _dte.Application.Events.SolutionEvents;
             Package = this;
 
             Events2 events = _dte.Events as Events2;
@@ -38,9 +40,9 @@ namespace BundlerMinifierVsix
             _solutionEvents.BeforeClosing += SolutionEvent_BeforeClosing;
             _solutionEvents.Opened += SolutionEvent_Opened;
             _solutionEvents.ProjectRemoved += SolutionEvent_ProjectRemoved;
-            
+
             CreateBundle.Initialize(this);
-            UpdateBundle.Initialize(this);
+            //UpdateBundle.Initialize(this);
             UpdateAllFiles.Initialize(this);
             BundleOnBuild.Initialize(this);
             RemoveBundle.Initialize(this);
@@ -51,8 +53,8 @@ namespace BundlerMinifierVsix
         private void SolutionEvent_Opened()
         {
             ErrorList.CleanAllErrors();
-            
-            BundleOnSave.InitializeSolution(_dte.Application.Solution);
+
+            BundleOnSave.Initialize(_dte.Application.Solution.GetAllProjects());
         }
         private void SolutionEvent_ProjectRemoved(Project project)
         {
@@ -62,7 +64,7 @@ namespace BundlerMinifierVsix
 
         private void SolutionEvent_BeforeClosing()
         {
-            BundleOnSave.RemoveSolution(_dte.Application.Solution);
+            BundleOnSave.Remove(_dte.Application.Solution.GetAllProjects());
             ErrorList.CleanAllErrors();
         }
 
