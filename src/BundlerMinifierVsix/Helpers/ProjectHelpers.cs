@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio.PlatformUI;
 
 namespace BundlerMinifierVsix
 {
@@ -27,7 +28,7 @@ namespace BundlerMinifierVsix
         public static IEnumerable<ProjectItem> GetSelectedItems()
         {
             var items = (Array)_dte.ToolWindows.SolutionExplorer.SelectedItems;
-
+            
             foreach (UIHierarchyItem selItem in items)
             {
                 ProjectItem item = selItem.Object as ProjectItem;

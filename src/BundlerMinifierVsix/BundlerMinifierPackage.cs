@@ -7,6 +7,7 @@ using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using NuGet.VisualStudio;
 
 namespace BundlerMinifierVsix
 {
@@ -33,11 +34,11 @@ namespace BundlerMinifierVsix
             Package = this;
 
             Events2 events = _dte.Events as Events2;
-            _solutionEvents = events.SolutionEvents;
 
-            _solutionEvents.AfterClosing += () => { ErrorList.CleanAllErrors(); };
-            _solutionEvents.ProjectRemoved += (project) => { ErrorList.CleanAllErrors(); };
-
+            _solutionEvents.BeforeClosing += SolutionEvent_BeforeClosing;
+            _solutionEvents.Opened += SolutionEvent_Opened;
+            _solutionEvents.ProjectRemoved += SolutionEvent_ProjectRemoved;
+            
             CreateBundle.Initialize(this);
             UpdateBundle.Initialize(this);
             UpdateAllFiles.Initialize(this);
@@ -45,6 +46,24 @@ namespace BundlerMinifierVsix
             RemoveBundle.Initialize(this);
 
             base.Initialize();
+        }
+
+        private void SolutionEvent_Opened()
+        {
+            ErrorList.CleanAllErrors();
+            
+            BundleOnSave.InitializeSolution(_dte.Application.Solution);
+        }
+        private void SolutionEvent_ProjectRemoved(Project project)
+        {
+            BundleOnSave.Remove(project);
+            ErrorList.CleanAllErrors();
+        }
+
+        private void SolutionEvent_BeforeClosing()
+        {
+            BundleOnSave.RemoveSolution(_dte.Application.Solution);
+            ErrorList.CleanAllErrors();
         }
 
         public static bool IsDocumentDirty(string documentPath, out IVsPersistDocData persistDocData)
