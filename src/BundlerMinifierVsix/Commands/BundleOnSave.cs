@@ -65,14 +65,16 @@ namespace BundlerMinifierVsix.Commands
 
         private static void WatchedFileChanged(object sender, FileSystemEventArgs fileSystemEventArgs, string projectRootPath, string configFileLocation)
         {
-            var fileSystemWatcher = sender as FileSystemWatcher;
-            
             if (string.IsNullOrEmpty(configFileLocation)) return;
 
+            var relativePath = BundlerMinifier.FileHelpers.MakeRelative(projectRootPath, fileSystemEventArgs.FullPath);
+
+            if (relativePath.Contains("node_modules")) return;
+
+            var fileSystemWatcher = sender as FileSystemWatcher;
+            
             var bundles = BundleHandler.GetBundles(configFileLocation);
             var bundleInputPaths = bundles.SelectMany(x => x.InputFiles);
-
-            var relativePath = BundlerMinifier.FileHelpers.MakeRelative(projectRootPath, fileSystemEventArgs.FullPath);
 
             if (bundleInputPaths.Contains(relativePath))
                 BundleService.Process(configFileLocation, fileSystemWatcher);
