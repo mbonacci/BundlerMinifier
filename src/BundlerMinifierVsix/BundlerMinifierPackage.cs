@@ -37,34 +37,25 @@ namespace BundlerMinifierVsix
 
             Events2 events = _dte.Events as Events2;
 
-            _solutionEvents.BeforeClosing += SolutionEvent_BeforeClosing;
-            _solutionEvents.Opened += SolutionEvent_Opened;
-            _solutionEvents.ProjectRemoved += SolutionEvent_ProjectRemoved;
+            _solutionEvents.Opened += _solutionEvents_Opened;
+            _solutionEvents.BeforeClosing += _solutionEvents_BeforeClosing;
 
             CreateBundle.Initialize(this);
-            //UpdateBundle.Initialize(this);
+            BundleOnSave.Initialize(this);
             UpdateAllFiles.Initialize(this);
             BundleOnBuild.Initialize(this);
             RemoveBundle.Initialize(this);
 
             base.Initialize();
         }
-
-        private void SolutionEvent_Opened()
+        
+        private void _solutionEvents_BeforeClosing()
         {
-            ErrorList.CleanAllErrors();
-
-            BundleOnSave.Initialize(_dte.Application.Solution.GetAllProjects());
-        }
-        private void SolutionEvent_ProjectRemoved(Project project)
-        {
-            BundleOnSave.Remove(project);
             ErrorList.CleanAllErrors();
         }
 
-        private void SolutionEvent_BeforeClosing()
+        private void _solutionEvents_Opened()
         {
-            BundleOnSave.Remove(_dte.Application.Solution.GetAllProjects());
             ErrorList.CleanAllErrors();
         }
 

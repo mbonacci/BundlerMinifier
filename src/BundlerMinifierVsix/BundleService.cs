@@ -7,6 +7,7 @@ using EnvDTE80;
 using System.Linq;
 using System;
 using System.Collections.Generic;
+using BundlerMinifierVsix.Commands;
 
 namespace BundlerMinifierVsix
 {
@@ -88,10 +89,9 @@ namespace BundlerMinifierVsix
             return list;
         }
 
-        public static void Process(string conigFile, FileSystemWatcher watcher = null)
+        public static void Process(string conigFile)
         {
-            if (watcher != null)
-                watcher.EnableRaisingEvents = false;
+            BundleOnSave.Instance?.StopListening();
 
             ThreadPool.QueueUserWorkItem((o) =>
             {
@@ -108,8 +108,7 @@ namespace BundlerMinifierVsix
                 }
                 finally
                 {
-                    if (watcher != null)
-                        watcher.EnableRaisingEvents = true;
+                    BundleOnSave.Instance?.ResumeListening();
                 }
             });
         }

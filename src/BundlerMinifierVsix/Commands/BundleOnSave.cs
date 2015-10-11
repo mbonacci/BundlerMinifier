@@ -9,117 +9,112 @@ using BundlerMinifier;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using NuGet.VisualStudio;
+using Microsoft.VisualStudio.Shell.Interop;
+using EnvDTE80;
 
 namespace BundlerMinifierVsix.Commands
 {
-    internal sealed class BundleOnSave
+    internal sealed class BundleOnSave : IVsFileChangeEvents
     {
-        private static List<FileSystemWatcher> _fileSystemWatchers { get; set; } = new List<FileSystemWatcher>();
+        private readonly Package _package;
+        private DTE2 _dte;
+        private IVsFileChangeEx _fileChangeService;
+        private IDictionary<string, uint> _
 
-        public static void Initialize(Project project)
+        private bool _raiseEvents = true;
+
+        public static void Initialize(Package package)
         {
-            var configFilePath = project.GetConfigFile();
+            Instance = new BundleOnSave(package);
+        }
 
-            if (!string.IsNullOrEmpty(configFilePath) && File.Exists(configFilePath))
+        private IServiceProvider ServiceProvider
+        {
+            get
             {
-                var bundles = BundleHandler.GetBundles(configFilePath);
-                var fileExtensions = GetWatchedFileExtensions(bundles);
-
-                foreach (var fileExtension in fileExtensions)
-                {
-                    var fileWatcher = GetWatcher(project, fileExtension);
-
-                    if (fileWatcher == null)
-                    {
-                        AddWatcher(project, fileExtension);
-                    }
-                }
+                return _package;
             }
         }
 
-        private static IEnumerable<string> GetWatchedFileExtensions(IEnumerable<Bundle> bundles)
+        public static BundleOnSave Instance
         {
-            var inputFilePaths = bundles.Select(x => x.InputFiles.FirstOrDefault()).Where(x => x != null);
-
-            return inputFilePaths.Select(Path.GetExtension).Where(x => x != null);
+            get;
+            private set;
         }
 
-        private static FileSystemWatcher AddWatcher(Project project, string fileExtension)
+        private BundleOnSave(Package package)
         {
-            var projectRootPath = project.GetRootFolder();
-            var configFileLocation = project.GetConfigFile();
-            var watcher = new FileSystemWatcher(projectRootPath);
+            if (package == null)
+            {
+                throw new ArgumentNullException("package");
+            }
 
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
-            watcher.EnableRaisingEvents = true;
-            watcher.IncludeSubdirectories = true;
-            watcher.Changed += (sender, fileArgs) => WatchedFileChanged(sender, fileArgs, projectRootPath, configFileLocation);
-            watcher.Filter = FilterForFileExtension(fileExtension);
+            _package = package;
 
-            _fileSystemWatchers.Add(watcher);
+            _fileChangeService = this.ServiceProvider.GetService(typeof(SVsFileChangeEx)) as IVsFileChangeEx;
+            _dte = this.ServiceProvider.GetService(typeof(DTE)) as DTE2;
 
-            return watcher;
+            if (_fileChangeService != null && _dte != null)
+            {
+                _dte.Application.Events.SolutionEvents.ProjectAdded += HandleProjectAdded;
+                _dte.Application.Events.SolutionEvents.ProjectRemoved += HandleProjectRemoved;
+
+                // Solution "Opened" calls ProjectAdded for each Project in the solution, but closing a solution does not call ProjectRemoved.
+                _dte.Application.Events.SolutionEvents.BeforeClosing += HandleSolutionClosing; 
+            }
         }
-
-        private static string FilterForFileExtension(string fileExtension) => $"*{fileExtension}";
-
-        private static void WatchedFileChanged(object sender, FileSystemEventArgs fileSystemEventArgs, string projectRootPath, string configFileLocation)
-        {
-            if (string.IsNullOrEmpty(configFileLocation)) return;
-
-            var relativePath = BundlerMinifier.FileHelpers.MakeRelative(projectRootPath, fileSystemEventArgs.FullPath);
-
-            if (relativePath.Contains("node_modules")) return;
-
-            var fileSystemWatcher = sender as FileSystemWatcher;
-            
-            var bundles = BundleHandler.GetBundles(configFileLocation);
-            var bundleInputPaths = bundles.SelectMany(x => x.InputFiles);
-
-            if (bundleInputPaths.Contains(relativePath))
-                BundleService.Process(configFileLocation, fileSystemWatcher);
-        }
-
-
-        private static FileSystemWatcher GetWatcher(Project project, string fileExtension)
-        {
-            var filterValue = FilterForFileExtension(fileExtension);
-
-            return _fileSystemWatchers.FirstOrDefault(x => x.Path.Equals(project.GetRootFolder()) && x.Filter.Equals(filterValue));
-        }
-
-        public static void Remove(Project project)
+        
+        private void HandleProjectAdded(Project project)
         {
             var configFilePath = project.GetConfigFile();
 
-            if (!string.IsNullOrEmpty(configFilePath) && File.Exists(configFilePath))
+            if(!string.IsNullOrEmpty(configFilePath) && File.Exists(configFilePath))
             {
-                var bundles = BundleHandler.GetBundles(configFilePath);
-                var fileExtensions = GetWatchedFileExtensions(bundles);
-
-                foreach (var fileExtension in fileExtensions)
-                {
-                    var fileWatcher = GetWatcher(project, fileExtension);
-
-                    if (fileWatcher != null)
-                    {
-                        fileWatcher.Dispose();
-                        _fileSystemWatchers.Remove(fileWatcher);
-                    }
-                }
+                MonitorChanges(project, configFilePath);
             }
         }
 
-        public static void Initialize(IEnumerable<Project> projects)
+        public int FilesChanged(uint cChanges, string[] rgpszFile, uint[] rggrfChange)
         {
-            foreach (Project project in projects)
-                Initialize(project);
+
         }
 
-        public static void Remove(IEnumerable<Project> projects)
+        public int DirectoryChanged(string pszDirectory)
         {
-            foreach (Project project in projects)
-                Remove(project);
+
+        }
+
+        private void MonitorChanges(Project project, string configFilePath)
+        {
+
+        }
+
+        private void HandleProjectRemoved(Project project)
+        {
+
+        }
+        
+        private void HandleSolutionClosing()
+        {
+            var projects = _dte.Application?.Solution?.GetAllProjects();
+
+            if(projects != null)
+            {
+                foreach(var project in projects)
+                {
+                    HandleProjectRemoved(project);
+                }
+            }
+        }
+        
+        public void StopListening()
+        {
+            _raiseEvents = false;
+        }
+
+        public void ResumeListening()
+        {
+            _raiseEvents = true;
         }
     }
 }
