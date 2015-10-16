@@ -56,6 +56,7 @@ namespace BundlerMinifierVsix.Listeners
             if (e.FileActionType == FileActionTypes.ContentSavedToDisk)
             {
                 BundleService.Process(e.FilePath);
+                BundleOnSave.Instance.BundleConfigChanged(e.FilePath);
             }
         }
     }
