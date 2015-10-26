@@ -14,7 +14,7 @@ namespace BundlerMinifierVsix
     {
         private static BundleFileProcessor _processor;
         private static DTE2 _dte;
-        private static string[] _supported = new[] { ".JS", ".CSS", ".HTML", ".HTM" };
+        private static string[] _supported = new[] { ".JS", ".CSS", ".HTML", ".HTM", ".TS" };
 
         static BundleService()
         {

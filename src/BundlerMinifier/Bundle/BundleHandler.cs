@@ -69,6 +69,7 @@ namespace BundlerMinifier
             foreach (string input in inputFiles)
             {
                 string file = Path.Combine(baseFolder, input);
+                if (Path.GetExtension(file).ToLower() == ".ts") file = Path.ChangeExtension(file, ".js");
 
                 if (File.Exists(file))
                 {

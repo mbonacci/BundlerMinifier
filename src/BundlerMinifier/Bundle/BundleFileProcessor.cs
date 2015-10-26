@@ -8,7 +8,7 @@ namespace BundlerMinifier
 {
     public class BundleFileProcessor
     {
-        private static string[] _supported = new[] { ".JS", ".CSS", ".HTML", ".HTM" };
+        private static string[] _supported = new[] { ".JS", ".CSS", ".HTML", ".HTM", ".TS" };
 
         public static bool IsSupported(IEnumerable<string> files)
         {
