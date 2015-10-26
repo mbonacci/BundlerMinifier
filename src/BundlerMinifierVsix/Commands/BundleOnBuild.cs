@@ -98,7 +98,7 @@ namespace BundlerMinifierVsix.Commands
                 if (question == DialogResult.No)
                     return;
 
-                Version version = new Version(BundlerMinifier.Constants.VERSION);
+                Version version = new Version(BundlerMinifierPackage.Version);
                 if (version == new Version(1, 0, 21))
                     version = (Version)null;
 

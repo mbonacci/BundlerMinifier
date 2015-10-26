@@ -12,7 +12,6 @@ namespace BundlerMinifierVsix.Listeners
     [Export(typeof(IVsTextViewCreationListener))]
     [ContentType("javascript")]
     [ContentType("css")]
-    [ContentType("typescript")]
     [ContentType("htmlx")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     class SourceFileCreationListener : IVsTextViewCreationListener

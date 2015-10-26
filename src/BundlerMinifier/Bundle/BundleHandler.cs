@@ -42,9 +42,6 @@ namespace BundlerMinifier
 
         public static IEnumerable<Bundle> GetBundles(string configFile)
         {
-            if (string.IsNullOrEmpty(configFile))
-                return Enumerable.Empty<Bundle>();
-
             FileInfo file = new FileInfo(configFile);
 
             if (!file.Exists)
@@ -65,27 +62,37 @@ namespace BundlerMinifier
         {
             StringBuilder sb = new StringBuilder();
             List<string> inputFiles = bundle.GetAbsoluteInputFiles();
+            //string ext = Path.GetExtension(bundle.OutputFileName);
+
+            // Support both directories and specific files
+            //foreach (string input in bundle.InputFiles)
+            //{
+            //    string fullPath = Path.Combine(baseFolder, input);
+
+            //    if (Directory.Exists(fullPath))
+            //    {
+            //        DirectoryInfo dir = new DirectoryInfo(fullPath);
+            //        SearchOption search = bundle.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            //        var files = dir.GetFiles("*" + ext, search);
+            //        inputFiles.AddRange(files.Select(f => f.FullName));
+            //    }
+            //}
 
             foreach (string input in inputFiles)
             {
                 string file = Path.Combine(baseFolder, input);
-                if (Path.GetExtension(file).ToLower() == ".ts") file = Path.ChangeExtension(file, ".js");
+                string content;
 
-                if (File.Exists(file))
+                if (input.EndsWith(".css", System.StringComparison.OrdinalIgnoreCase) && AdjustRelativePaths(bundle))
                 {
-                    string content;
-
-                    if (input.EndsWith(".css", StringComparison.OrdinalIgnoreCase) && AdjustRelativePaths(bundle))
-                    {
-                        content = CssRelativePath.Adjust(file, bundle.GetAbsoluteOutputFile());
-                    }
-                    else
-                    {
-                        content = BundleMinifier.ReadAllText(file);
-                    }
-
-                    sb.AppendLine(content);
+                    content = CssRelativePath.Adjust(file, bundle.GetAbsoluteOutputFile());
                 }
+                else
+                {
+                    content = BundleMinifier.ReadAllText(file);
+                }
+
+                sb.AppendLine(content);
             }
 
             bundle.Output = sb.ToString().Trim();

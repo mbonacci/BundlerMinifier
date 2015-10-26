@@ -7,6 +7,7 @@ using EnvDTE80;
 using System.Linq;
 using System;
 using System.Collections.Generic;
+using BundlerMinifierVsix.Commands;
 
 namespace BundlerMinifierVsix
 {
@@ -14,7 +15,7 @@ namespace BundlerMinifierVsix
     {
         private static BundleFileProcessor _processor;
         private static DTE2 _dte;
-        private static string[] _supported = new[] { ".JS", ".CSS", ".HTML", ".HTM", ".TS" };
+        private static string[] _supported = new[] { ".JS", ".CSS", ".HTML", ".HTM" };
 
         static BundleService()
         {
@@ -70,9 +71,6 @@ namespace BundlerMinifierVsix
         {
             List<Bundle> list = new List<Bundle>();
 
-            if (string.IsNullOrEmpty(configFile))
-                return list;
-
             try
             {
                 var bundles = BundleHandler.GetBundles(configFile);
@@ -93,6 +91,8 @@ namespace BundlerMinifierVsix
 
         public static void Process(string conigFile)
         {
+            BundleOnSave.Instance?.StopListening();
+
             ThreadPool.QueueUserWorkItem((o) =>
             {
                 try
@@ -102,7 +102,13 @@ namespace BundlerMinifierVsix
                 catch (Exception ex)
                 {
                     Logger.Log(ex);
-                    MessageBox.Show($"There is an error in the {Constants.CONFIG_FILENAME} file. This could be due to a change in the format after this extension was updated.", Constants.VSIX_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        $"There is an error in the {Constants.CONFIG_FILENAME} file. This could be due to a change in the format after this extension was updated.",
+                        "Web Compiler", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                finally
+                {
+                    BundleOnSave.Instance?.ResumeListening();
                 }
             });
         }
@@ -118,7 +124,7 @@ namespace BundlerMinifierVsix
                 catch (Exception ex)
                 {
                     Logger.Log(ex);
-                    MessageBox.Show($"There is an error in the {Constants.CONFIG_FILENAME} file. This could be due to a change in the format after this extension was updated.", Constants.VSIX_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"There is an error in the {Constants.CONFIG_FILENAME} file. This could be due to a change in the format after this extension was updated.", "Web Compiler", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             });
         }

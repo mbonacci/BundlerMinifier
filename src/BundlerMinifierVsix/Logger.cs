@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using BundlerMinifier;
 using Microsoft.VisualStudio.Shell.Interop;
 
 namespace BundlerMinifierVsix
@@ -42,7 +41,6 @@ namespace BundlerMinifierVsix
             if (ex != null)
             {
                 Log(ex.ToString());
-                Telemetry.TrackException(ex);
             }
         }
 

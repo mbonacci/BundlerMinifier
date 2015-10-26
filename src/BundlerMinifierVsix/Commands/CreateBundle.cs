@@ -101,8 +101,6 @@ namespace BundlerMinifierVsix.Commands
             BundleService.Process(configFile);
             BundlerMinifierPackage._dte.StatusBar.Progress(false, "Creating bundle");
             BundlerMinifierPackage._dte.StatusBar.Text = "Bundle created";
-
-            Telemetry.TrackEvent("VS create bundle");
         }
 
         private static Bundle CreateBundleFile(IEnumerable<string> files, string outputFile)

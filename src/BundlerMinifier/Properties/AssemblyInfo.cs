@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using BundlerMinifier;
 
-[assembly: AssemblyTitle("Bundler & Minifier")]
+[assembly: AssemblyTitle("BundlerMinifier")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Mads Kristensen")]
-[assembly: AssemblyProduct("Bundler & Minifier")]
-[assembly: AssemblyCopyright("Copyright © 2015")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("BundlerMinifier")]
+[assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -16,5 +16,5 @@ using BundlerMinifier;
 [assembly: ComVisible(false)]
 [assembly: Guid("b714b5b9-27c4-443c-9517-fe5c5ef46ea2")]
 
-[assembly: AssemblyVersion(Constants.VERSION)]
-[assembly: AssemblyFileVersion(Constants.VERSION)]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

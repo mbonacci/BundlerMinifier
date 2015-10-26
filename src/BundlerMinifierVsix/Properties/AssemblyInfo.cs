@@ -12,5 +12,5 @@ using BundlerMinifierVsix;
 [assembly: AssemblyCulture("en-US")]
 [assembly: ComVisible(false)]
 
-[assembly: AssemblyVersion(BundlerMinifier.Constants.VERSION)]
-[assembly: AssemblyFileVersion(BundlerMinifier.Constants.VERSION)]
+[assembly: AssemblyVersion(BundlerMinifierPackage.Version)]
+[assembly: AssemblyFileVersion(BundlerMinifierPackage.Version)]
